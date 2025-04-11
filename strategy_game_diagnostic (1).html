@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>משחק אסטרטגיה - מחקר</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      direction: rtl;
+      background: #f0f8ff;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    #form, #game {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin: auto;
+      max-width: 400px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+      width: 80%;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(4, 80px);
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .card {
+      width: 80px;
+      height: 80px;
+      background: #bdc3c7;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      transition: background 0.3s;
+    }
+    .card.revealed {
+      background: #ecf0f1;
+    }
+    .matched {
+      background: #2ecc71 !important;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <h2>משחק אסטרטגי - מחקר</h2>
+  <div id="form">
+    <input type="text" id="name" placeholder="הכנס שם"><br>
+    <select id="type">
+      <option value="">בחר משתתף</option>
+      <option value="ילד">ילד</option>
+      <option value="הורה">הורה</option>
+    </select><br>
+    <input type="number" id="age" placeholder="הכנס גיל"><br>
+    <button onclick="startGame()">התחל משחק</button>
+  </div>
+
+  <div id="game" style="display:none;">
+    <p id="playerInfo"></p>
+    <div id="cards"></div>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const images = ["🐶", "🐱", "🦊", "🐼", "🐵", "🐸", "🐙", "🦁"];
+    let items = images.concat(images);
+    let flipped = [], matched = [], startTime, name, age, playerType;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function startGame() {
+      name = document.getElementById('name').value.trim();
+      age = document.getElementById('age').value.trim();
+      playerType = document.getElementById('type').value;
+      if (!name || !age || !playerType) return alert('יש למלא את כל השדות');
+
+      document.getElementById('form').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      document.getElementById('playerInfo').innerText = `שם: ${name} | גיל: ${age} | משתתף: ${playerType}`;
+      startTime = Date.now();
+
+      shuffle(items);
+      const cardsDiv = document.getElementById('cards');
+      cardsDiv.innerHTML = '';
+      items.forEach((emoji, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.value = emoji;
+        card.dataset.index = i;
+        card.onclick = flipCard;
+        card.innerText = '';
+        cardsDiv.appendChild(card);
+      });
+    }
+
+    function flipCard() {
+      if (flipped.length >= 2 || this.classList.contains('matched') || this.classList.contains('revealed')) return;
+      this.classList.add('revealed');
+      this.innerText = this.dataset.value;
+      flipped.push(this);
+
+      if (flipped.length === 2) {
+        const [first, second] = flipped;
+        if (first.dataset.value === second.dataset.value) {
+          flipped.forEach(card => {
+            card.classList.add('matched');
+            card.classList.remove('revealed');
+            matched.push(card);
+          });
+          flipped = [];
+          if (matched.length === items.length) {
+            const time = ((Date.now() - startTime) / 1000).toFixed(2);
+            document.getElementById('result').innerHTML = "<strong>המשחק הסתיים - שליחה תחל...</strong><br>" + 
+              `כל הכבוד! סיימת את המשחק בזמן של ${time} שניות.<br>
+              <strong>העתק תוצאה:</strong><br>
+              שם: ${name}, גיל: ${age}, משתתף: ${playerType}, זמן: ${time} שניות`;
+
+            const url = "https://script.google.com/macros/s/AKfycbw_XcKfTcyRW9EELWAsJk3jfN6gchza0jkxXUm8jXqioViQSelVg-D5t3TeDy6eA4eg/exec";
+            fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: name, type: playerType, age: age, time: time })
+            });
+          }
+        } else {
+          setTimeout(() => {
+            flipped.forEach(card => {
+              card.classList.remove('revealed');
+              card.innerText = '';
+            });
+            flipped = [];
+          }, 1000);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
