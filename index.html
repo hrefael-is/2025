@@ -6,20 +6,17 @@
   <title>משחק אסטרטגיה - מחקר</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       direction: rtl;
-      background: #f0f8ff;
-    }
-    h2 {
-      color: #2c3e50;
+      background: #e8f4f8;
     }
     #form, #game {
       background: white;
       border-radius: 10px;
       padding: 20px;
       margin: auto;
-      max-width: 400px;
+      max-width: 450px;
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
     input, select {
@@ -36,9 +33,6 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-    }
-    button:hover {
-      background-color: #2980b9;
     }
     #cards {
       display: grid;
@@ -59,17 +53,12 @@
       font-size: 2em;
       transition: background 0.3s;
     }
-    .card.revealed {
-      background: #ecf0f1;
-    }
-    .matched {
-      background: #2ecc71 !important;
-      cursor: default;
-    }
+    .card.revealed { background: #ecf0f1; }
+    .matched { background: #2ecc71 !important; cursor: default; }
   </style>
 </head>
 <body>
-  <h2>משחק אסטרטגי - מחקר</h2>
+  <h2>משחק אסטרטגיה - מחקר</h2>
   <div id="form">
     <input type="text" id="name" placeholder="הכנס שם"><br>
     <select id="type">
@@ -88,9 +77,10 @@
   </div>
 
   <script>
-    const images = ["🐶", "🐱", "🦊", "🐼", "🐵", "🐸", "🐙", "🦁"];
+    const images = ["🐶","🐱","🦊","🐼","🐵","🐸","🐙","🦁"];
     let items = images.concat(images);
     let flipped = [], matched = [], startTime, name, age, playerType;
+    const url = "https://script.google.com/macros/s/AKfycbw_XcKfTcyRW9EELWAsJk3jfN6gchza0jkxXUm8jXqioViQSelVg-D5t3TeDy6eA4eg/exec";
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -141,16 +131,22 @@
           flipped = [];
           if (matched.length === items.length) {
             const time = ((Date.now() - startTime) / 1000).toFixed(2);
-            document.getElementById('result').innerHTML = "<strong>המשחק הסתיים - שליחה תחל...</strong><br>" + 
-              `כל הכבוד! סיימת את המשחק בזמן של ${time} שניות.<br>
-              <strong>העתק תוצאה:</strong><br>
-              שם: ${name}, גיל: ${age}, משתתף: ${playerType}, זמן: ${time} שניות`;
+            const resultElem = document.getElementById('result');
+            resultElem.innerHTML = `המשחק הסתיים!<br>זמן: ${time} שניות<br>שליחה תחל...<br><hr>`;
+            const dataToSend = { name, type: playerType, age, time };
+            resultElem.innerHTML += "<strong>נתונים שנשלחים:</strong><pre>" + JSON.stringify(dataToSend, null, 2) + "</pre>";
+            console.log("📤 שולח נתונים:", dataToSend);
 
-            const url = "https://script.google.com/macros/s/AKfycbw_XcKfTcyRW9EELWAsJk3jfN6gchza0jkxXUm8jXqioViQSelVg-D5t3TeDy6eA4eg/exec";
             fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: name, type: playerType, age: age, time: time })
+              body: JSON.stringify(dataToSend)
+            }).then(response => response.text()).then(text => {
+              resultElem.innerHTML += "<strong style='color:green;'>תשובת השרת:</strong><br>" + text;
+              console.log("✅ תגובה:", text);
+            }).catch(error => {
+              resultElem.innerHTML += "<strong style='color:red;'>שגיאה בשליחה:</strong><br>" + error.message;
+              console.error("❌ שגיאה:", error);
             });
           }
         } else {
