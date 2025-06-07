@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>איש תלוי - יוון</title>
+  <style>
+    html {
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      font-family: 'Varela Round', sans-serif;
+      background: linear-gradient(to bottom right, #b2ebf2, #e1f5fe);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      direction: rtl;
+    }
+    h1 {
+      background-color: #0288d1;
+      color: white;
+      width: 100%;
+      margin: 0;
+      padding: 1rem 0;
+      text-align: center;
+      font-size: 1.6rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    #start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 2rem 1rem;
+      max-width: 90vw;
+    }
+    #start-button {
+      background-color: #0288d1;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    #game-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding: 1rem;
+    }
+    #hangman {
+      margin-top: 1rem;
+      background-color: #ffffff;
+      border: 2px solid #0288d1;
+      border-radius: 10px;
+      max-width: 90vw;
+      height: auto;
+    }
+    .question {
+      font-size: 1.2rem;
+      margin: 2rem 1rem 1rem;
+      color: #01579b;
+      font-weight: bold;
+      text-align: center;
+    }
+    .answers {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 1rem;
+      gap: 10px;
+      max-width: 100%;
+    }
+    .feedback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 10px;
+    }
+    .answers button, .feedback button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      background-color: #4fc3f7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      transition: 0.3s;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .answers button:hover, .feedback button:hover {
+      background-color: #0288d1;
+    }
+    #result {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #d32f2f;
+      font-weight: bold;
+      text-align: center;
+    }
+    #score {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      color: #333;
+      font-weight: bold;
+    }
+    .flag-img {
+      width: 80px;
+      height: auto;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+    }
+    @media (max-width: 480px) {
+      .question {
+        font-size: 1.1rem;
+      }
+      .answers button {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h1>משחק איש תלוי - יוון</h1>
+  <div id="start-screen">
+    <p>ברוכים הבאים למשחק על יוון!<br>
+    במשחק תצטרכו לענות על שאלות בנושא יוון – המדינה, התרבות, המאכלים והטבע שלה.<br>
+    בכל טעות יצויר חלק מהאיש התלוי. נסו לענות נכון על כל השאלות!</p>
+    <button id="start-button">התחל</button>
+  </div>
+  <div id="game-container">
+    <canvas id="hangman" width="200" height="250"></canvas>
+    <div id="score"></div>
+    <div class="question" id="question"></div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback"></div>
+    <div id="result"></div>
+  </div>
+  <script>
+const questions = [
+  {
+    q: "איזה מהדגלים הבאים שייך ליוון?",
+    a: [
+      "https://upload.wikimedia.org/wikipedia/commons/b/ba/Flag_of_Germany.svg",
+      "https://upload.wikimedia.org/wikipedia/commons/5/5c/Flag_of_Greece.svg",
+      "https://upload.wikimedia.org/wikipedia/commons/0/05/Flag_of_Brazil.svg",
+      "https://upload.wikimedia.org/wikipedia/commons/c/c3/Flag_of_France.svg"
+    ],
+    c: 1,
+    e: "זהו הדגל של יוון – כחול לבן עם צלב בפינה."
+  },
+  { q: "כמה תושבים חיים ביוון (נכון ל-2023)?", a: ["5.6 מיליון", "10.41 מיליון", "16.61 מיליון", "22.35 מיליון"], c: 1, e: "ביוון חיים כ-10.41 מיליון תושבים נכון לשנת 2023." },
+  { q: "מהי עיר הבירה של יוון?", a: ["אתונה", "סלוניקי", "כרתים", "מיקונוס"], c: 0, e: "אתונה היא עיר הבירה של יוון." },
+  { q: "האם יוון מדינה מפותחת או מתפתחת?", a: ["מפותחת", "מתפתחת"], c: 0, e: "יוון נחשבת מדינה מפותחת באירופה." },
+  { q: "מהו הר גבוה ומפורסם ביוון?", a: ["הר האולימפוס", "הר חרמון", "הר הגלבוע", "הר אתנה"], c: 0, e: "הר האולימפוס הוא הגבוה ביוון ונחשב מקום מושב האלים." },
+  { q: "מהו סלט יווני טיפוסי?", a: ["חסה, עגבנייה, גזר", "עגבנייה, מלפפון, זיתים, בצל, גבינת פטה", "עגבנייה, חסה, תירס", "רק מלפפונים"], c: 1, e: "סלט יווני כולל עגבנייה, מלפפון, זיתים, בצל וגבינת פטה." },
+  { q: "מהו מאכל יווני עם שכבות חצילים ובשר?", a: ["בקלווה", "סופלאקי", "מוזקה", "גירוס"], c: 2, e: "מוזקה הוא תבשיל עם שכבות חצילים, בשר ורוטב לבן." },
+  { q: "מהי דת הרוב ביוון?", a: ["נצרות קתולית", "אסלאם", "יהדות", "נצרות אורתודוקסית"], c: 3, e: "רוב היוונים הם נוצרים אורתודוקסים." },
+  { q: "איך קוראים לריקוד היווני במעגלים?", a: ["סירטאקי", "טנגו", "פלמנקו", "בוגי ווגי"], c: 0, e: "סירטאקי הוא ריקוד יווני מפורסם במעגלים." },
+  { q: "מהו קינוח יווני מתוק עם דבש ואגוזים?", a: ["בקלווה", "עוגת שוקולד", "קרואסון", "סופגניה"], c: 0, e: "בקלווה היא מאפה עם אגוזים ודבש." }
+];
+
+let current = 0;
+let errors = 0;
+let correctCount = 0;
+const maxErrors = 9;
+
+const canvas = document.getElementById('hangman');
+const ctx = canvas.getContext('2d');
+
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-container').style.display = 'flex';
+  showQuestion();
+  updateScore();
+}
+
+function updateScore() {
+  document.getElementById('score').textContent = `✔️ ${correctCount} תשובות נכונות מתוך ${questions.length}`;
+}
+
+function drawHangman(error) {
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  switch (error) {
+    case 1: ctx.beginPath(); ctx.moveTo(10, 240); ctx.lineTo(150, 240); break;
+    case 2: ctx.moveTo(40, 240); ctx.lineTo(40, 20); break;
+    case 3: ctx.lineTo(120, 20); break;
+    case 4: ctx.lineTo(120, 40); break;
+    case 5: ctx.beginPath(); ctx.arc(120, 55, 15, 0, Math.PI * 2); break;
+    case 6: ctx.moveTo(120, 70); ctx.lineTo(120, 120); break;
+    case 7: ctx.moveTo(120, 80); ctx.lineTo(100, 100); break;
+    case 8: ctx.moveTo(120, 80); ctx.lineTo(140, 100); break;
+    case 9: ctx.moveTo(120, 120); ctx.lineTo(100, 150); ctx.moveTo(120, 120); ctx.lineTo(140, 150); break;
+  }
+  ctx.stroke();
+}
+
+function showQuestion() {
+  updateScore();
+  document.getElementById('feedback').innerHTML = '';
+  if (current >= questions.length) {
+    document.getElementById('question').textContent = '🎉 ניצחת! ענית על כל השאלות!';
+    document.getElementById('answers').innerHTML = '<button onclick="location.reload()">שחק שוב</button>';
+    return;
+  }
+  const q = questions[current];
+  document.getElementById('question').textContent = q.q;
+  let answersHTML = '';
+  if (q.a[0].includes('http')) {
+    answersHTML = q.a.map((imgUrl, i) =>
+      `<button onclick="checkAnswer(${i})"><img src="${imgUrl}" alt="option" class="flag-img"></button>`
+    ).join('');
+  } else {
+    answersHTML = q.a.map((ans, i) =>
+      `<button onclick="checkAnswer(${i})">${ans}</button>`
+    ).join('');
+  }
+  document.getElementById('answers').innerHTML = answersHTML;
+}
+
+function checkAnswer(index) {
+  const correct = questions[current].c;
+  const explanation = questions[current].e;
+  if (index === correct) {
+    correctCount++;
+    document.getElementById('answers').innerHTML = '';
+    document.getElementById('feedback').innerHTML =
+      `<div style='color: green; font-weight: bold;'>✅ כל הכבוד! צדקת.</div><div>${explanation}</div><button onclick='nextQuestion()'>הבא</button>`;
+    updateScore();
+  } else {
+    errors++;
+    drawHangman(errors);
+    if (errors >= maxErrors) {
+      document.getElementById('question').textContent = '💀 הפסדת! האיש נתלה.';
+      document.getElementById('answers').innerHTML = '<button onclick="location.reload()">נסה שוב</button>';
+    }
+  }
+}
+
+function nextQuestion() {
+  current++;
+  showQuestion();
+}
+
+document.getElementById("start-button").addEventListener("click", startGame);
+</script>
+
+</body>
+</html>
