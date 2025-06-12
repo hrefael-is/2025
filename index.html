@@ -143,15 +143,18 @@
     <button id="start-button">התחל</button>
   </div>
   <div id="game-container">
-    <canvas id="hangman" width="200" height="250"></canvas>
+    <canvas id="hangman" width="200" height="250" aria-label="ציור של איש תלוי"></canvas>
     <div id="score"></div>
     <div class="question" id="question"></div>
     <div class="answers" id="answers"></div>
     <div class="feedback" id="feedback"></div>
     <div id="result"></div>
   </div>
+  <audio id="correct-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_b9383cdd88.mp3?filename=correct-6033.mp3"></audio>
+  <audio id="wrong-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_68b2f7d56f.mp3?filename=wrong-6034.mp3"></audio>
+
   <script>
-const questions = [
+    const questions = [
   {
     q: "איזה מהדגלים הבאים שייך ליוון?",
     a: [
@@ -171,94 +174,112 @@ const questions = [
   { q: "מהו מאכל יווני עם שכבות חצילים ובשר?", a: ["בקלווה", "סופלאקי", "מוזקה", "גירוס"], c: 2, e: "מוזקה הוא תבשיל עם שכבות חצילים, בשר ורוטב לבן." },
   { q: "מהי דת הרוב ביוון?", a: ["נצרות קתולית", "אסלאם", "יהדות", "נצרות אורתודוקסית"], c: 3, e: "רוב היוונים הם נוצרים אורתודוקסים." },
   { q: "איך קוראים לריקוד היווני במעגלים?", a: ["סירטאקי", "טנגו", "פלמנקו", "בוגי ווגי"], c: 0, e: "סירטאקי הוא ריקוד יווני מפורסם במעגלים." },
-  { q: "מהו קינוח יווני מתוק עם דבש ואגוזים?", a: ["בקלווה", "עוגת שוקולד", "קרואסון", "סופגניה"], c: 0, e: "בקלווה היא מאפה עם אגוזים ודבש." }
+  { q: "מהו קינוח יווני מתוק עם דבש ואגוזים?", a: ["בקלווה", "עוגת שוקולד", "קרואסון", "סופגניה"], c: 0, e: "בקלווה היא מאפה עם אגוזים ודבש." },
+  { q: "מי היה ראש האלים במיתולוגיה היוונית, שישב על הר האולימפוס?", a: ["פוסידון (אל הים)", "האדס (אל השאול)", "זאוס (אל השמיים והרעם)", "אפולו (אל השמש)"], c: 2, e: "זאוס נחשב לאבי האלים והאדם, ושליט הר האולימפוס." },
+  { q: "היכן נולדו המשחקים האולימפיים ביוון העתיקה?", a: ["באתונה", "באולימפיה", "בספרטה", "בכרתים"], c: 1, e: "המשחקים האולימפיים הראשונים נערכו בעיר אולימפיה לכבוד האל זאוס." },
+  { q: "מהו האי הגדול ביותר ביוון?", a: ["רודוס", "מיקונוס", "סנטוריני", "כרתים"], c: 3, e: "כרתים הוא האי הגדול ביותר ביוון והחמישי בגודלו בים התיכון." },
+  { q: "בסיפור המפורסם על מלחמת טרויה, באיזו תחבולה השתמשו היוונים כדי לכבוש את העיר?", a: ["חפרו מנהרה", "בנו סוס עץ ענק", "הרעילו את המים", "התחפשו לחיילים טרויאנים"], c: 1, e: "היוונים בנו סוס עץ חלול, הסתתרו בתוכו, והטרויאנים הכניסו אותו לעירם מבלי לדעת מה יש בפנים." },
+  { q: "איזה אי יווני מפורסם בזכות הבתים הלבנים עם הכיפות הכחולות והשקיעות המרהיבות?", a: ["קפריסין", "סנטוריני", "קורפו", "איוס"], c: 1, e: "האי סנטוריני נוצר מהתפרצות הר געש, והנוף שלו הוא מהמפורסמים והמצולמים בעולם." },
+  { q: "באיזה מטבע משתמשים היום ביוון?", a: ["דרכמה", "לירה", "דולר", "אירו"], c: 3, e: "יוון היא חלק מהאיחוד האירופי, ולכן המטבע הרשמי שלה הוא האירו (€)." },
+  { q: "איזה גיבור מהמיתולוגיה היוונית היה חזק מאוד ונאלץ לבצע 12 משימות קשות?", a: ["פרסאוס", "הרקולס", "תזאוס", "אודיסאוס"], c: 1, e: "הרקולס היה בנו של זאוס, ונודע בכוחו העצום וב-12 המטלות שהוטלו עליו כעונש." },
+  { q: "איך נקרא כלי הנגינה היווני המפורסם, בעל הצוואר הארוך והצליל המיוחד?", a: ["גיטרה", "כינור", "בוזוקי", "חליל"], c: 2, e: "הבוזוקי הוא כלי מיתר מרכזי במוזיקה היוונית העממית והפופולרית." },
+  { q: "על שם איזו אלה מהמיתולוגיה נקראת עיר הבירה אתונה?", a: ["אפרודיטה, אלת האהבה", "הרה, אשת זאוס", "אתנה, אלת החוכמה", "ארטמיס, אלת הציד"], c: 2, e: "אתונה נקראת על שם האלה אתנה, שלפי המיתולוגיה העניקה לעיר את עץ הזית במתנה." },
+  { q: "מה משמעות המילה 'אקרופוליס' ביוונית?", a: ["השוק המרכזי", "הנמל הגדול", "העיר העליונה", "התיאטרון העתיק"], c: 2, e: "'אקרו' פירושו גבוה, ו'פוליס' פירושו עיר. האקרופוליס הייתה הגבעה המבוצרת והחשובה בעיר." }
 ];
 
-let current = 0;
+    let current = 0;
+let questionOrder = [];
 let errors = 0;
 let correctCount = 0;
 const maxErrors = 9;
+    const canvas = document.getElementById('hangman');
+    const ctx = canvas.getContext('2d');
+    const correctSound = document.getElementById('correct-sound');
+correctSound.load();
+    const wrongSound = document.getElementById('wrong-sound');
+wrongSound.load();
 
-const canvas = document.getElementById('hangman');
-const ctx = canvas.getContext('2d');
-
-function startGame() {
-  document.getElementById('start-screen').style.display = 'none';
-  document.getElementById('game-container').style.display = 'flex';
-  showQuestion();
-  updateScore();
-}
-
-function updateScore() {
-  document.getElementById('score').textContent = `✔️ ${correctCount} תשובות נכונות מתוך ${questions.length}`;
-}
-
-function drawHangman(error) {
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#000';
-  switch (error) {
-    case 1: ctx.beginPath(); ctx.moveTo(10, 240); ctx.lineTo(150, 240); break;
-    case 2: ctx.moveTo(40, 240); ctx.lineTo(40, 20); break;
-    case 3: ctx.lineTo(120, 20); break;
-    case 4: ctx.lineTo(120, 40); break;
-    case 5: ctx.beginPath(); ctx.arc(120, 55, 15, 0, Math.PI * 2); break;
-    case 6: ctx.moveTo(120, 70); ctx.lineTo(120, 120); break;
-    case 7: ctx.moveTo(120, 80); ctx.lineTo(100, 100); break;
-    case 8: ctx.moveTo(120, 80); ctx.lineTo(140, 100); break;
-    case 9: ctx.moveTo(120, 120); ctx.lineTo(100, 150); ctx.moveTo(120, 120); ctx.lineTo(140, 150); break;
-  }
-  ctx.stroke();
-}
-
-function showQuestion() {
-  updateScore();
-  document.getElementById('feedback').innerHTML = '';
-  if (current >= questions.length) {
-    document.getElementById('question').textContent = '🎉 ניצחת! ענית על כל השאלות!';
-    document.getElementById('answers').innerHTML = '<button onclick="location.reload()">שחק שוב</button>';
-    return;
-  }
-  const q = questions[current];
-  document.getElementById('question').textContent = q.q;
-  let answersHTML = '';
-  if (q.a[0].includes('http')) {
-    answersHTML = q.a.map((imgUrl, i) =>
-      `<button onclick="checkAnswer(${i})"><img src="${imgUrl}" alt="option" class="flag-img"></button>`
-    ).join('');
-  } else {
-    answersHTML = q.a.map((ans, i) =>
-      `<button onclick="checkAnswer(${i})">${ans}</button>`
-    ).join('');
-  }
-  document.getElementById('answers').innerHTML = answersHTML;
-}
-
-function checkAnswer(index) {
-  const correct = questions[current].c;
-  const explanation = questions[current].e;
-  if (index === correct) {
-    correctCount++;
-    document.getElementById('answers').innerHTML = '';
-    document.getElementById('feedback').innerHTML =
-      `<div style='color: green; font-weight: bold;'>✅ כל הכבוד! צדקת.</div><div>${explanation}</div><button onclick='nextQuestion()'>הבא</button>`;
-    updateScore();
-  } else {
-    errors++;
-    drawHangman(errors);
-    if (errors >= maxErrors) {
-      document.getElementById('question').textContent = '💀 הפסדת! האיש נתלה.';
-      document.getElementById('answers').innerHTML = '<button onclick="location.reload()">נסה שוב</button>';
+    function startGame() {
+  questionOrder = [...Array(questions.length).keys()].sort(() => Math.random() - 0.5);
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('game-container').style.display = 'flex';
+      showQuestion();
+      updateScore();
     }
-  }
-}
 
-function nextQuestion() {
-  current++;
-  showQuestion();
-}
+    function updateScore() {
+      document.getElementById('score').textContent = `✔️ ${correctCount} תשובות נכונות מתוך ${questions.length}`;
+    }
 
-document.getElementById("start-button").addEventListener("click", startGame);
-</script>
+    function drawHangman(error) {
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#000';
+      switch (error) {
+        case 1: ctx.beginPath(); ctx.moveTo(10, 240); ctx.lineTo(150, 240); break;
+        case 2: ctx.moveTo(40, 240); ctx.lineTo(40, 20); break;
+        case 3: ctx.lineTo(120, 20); break;
+        case 4: ctx.lineTo(120, 40); break;
+        case 5: ctx.beginPath(); ctx.arc(120, 55, 15, 0, Math.PI * 2); break;
+        case 6: ctx.moveTo(120, 70); ctx.lineTo(120, 120); break;
+        case 7: ctx.moveTo(120, 80); ctx.lineTo(100, 100); break;
+        case 8: ctx.moveTo(120, 80); ctx.lineTo(140, 100); break;
+        case 9: ctx.moveTo(120, 120); ctx.lineTo(100, 150); ctx.moveTo(120, 120); ctx.lineTo(140, 150); break;
+      }
+      ctx.stroke();
+    }
 
+    function showQuestion() {
+      updateScore();
+      document.getElementById('feedback').innerHTML = '';
+      if (current >= questions.length) {
+        document.getElementById('question').textContent = '🎉 ניצחת! ענית על כל השאלות!';
+        document.getElementById('answers').innerHTML = '<button onclick="location.reload()">שחק שוב</button>';
+        return;
+      }
+      const q = questions[questionOrder[current]];
+      document.getElementById('question').textContent = q.q;
+      let answersHTML = '';
+      if (q.a[0].includes('http')) {
+        answersHTML = q.a.map((imgUrl, i) =>
+          `<button onclick="checkAnswer(${i})"><img src="${imgUrl}" alt="אפשרות ${i + 1}" class="flag-img"></button>`
+        ).join('');
+      } else {
+        const shuffled = q.a.map((ans, i) => ({ i, ans })).sort(() => Math.random() - 0.5);
+        answersHTML = shuffled.map(({ i, ans }) =>
+          `<button onclick="checkAnswer(${i})">${ans}</button>`
+        ).join('');
+      }
+      document.getElementById('answers').innerHTML = answersHTML;
+    }
+
+    function checkAnswer(index) {
+      const correct = questions[questionOrder[current]].c;
+      const explanation = questions[questionOrder[current]].e;
+      if (index === correct) {
+        correctCount++;
+        correctSound.play();
+        document.getElementById('answers').innerHTML = '';
+        document.getElementById('feedback').innerHTML =
+          `<div style='color: green; font-weight: bold;'>✅ כל הכבוד! צדקת.</div><div>${explanation}</div>`;
+        updateScore();
+        setTimeout(nextQuestion, 3000);
+      } else {
+        errors++;
+        wrongSound.play();
+        drawHangman(errors);
+        if (errors >= maxErrors) {
+          document.getElementById('question').textContent = '💀 הפסדת! האיש נתלה.';
+          document.getElementById('answers').innerHTML = '<button onclick="location.reload()">נסה שוב</button>';
+        }
+      }
+    }
+
+    function nextQuestion() {
+      current++;
+      showQuestion();
+    }
+
+    document.getElementById("start-button").addEventListener("click", startGame);
+  </script>
 </body>
 </html>
